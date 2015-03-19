@@ -191,7 +191,7 @@ function AllPay_Credit6_Plugin_Init() {
                     $oPayment->Send['OrderResultURL'] = $this->order_result_url;
                     $oPayment->Send['MerchantTradeNo'] = ('yes' == $this->testmode ? $this->testmode_prefix : '') . $oOrder->id;
                     $oPayment->Send['MerchantTradeDate'] = date('Y/m/d H:i:s');
-                    $oPayment->Send['TotalAmount'] = round($oOrder->get_order_total());
+                    $oPayment->Send['TotalAmount'] = round($oOrder->get_total());
                     $oPayment->Send['TradeDesc'] = "AllPay_WooCommerce_Module";
                     $oPayment->Send['ChoosePayment'] = PaymentMethod::Credit;
                     $oPayment->Send['Remark'] = '';
@@ -232,7 +232,7 @@ function AllPay_Credit6_Plugin_Init() {
                     $szReturnMessgae = $arFeedback['RtnMsg'];
                     // 查詢系統訂單。
                     $oOrder = new WC_Order($szOrderID);
-                    $deTotalAmount = $oOrder->get_order_total();
+                    $deTotalAmount = $oOrder->get_total();
                     $szOrderStatus = $oOrder->status;
                     // 核對訂單金額。
                     if ($deTradeAmount == $deTotalAmount) {
