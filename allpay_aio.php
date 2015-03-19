@@ -6,7 +6,7 @@ include_once('AllPay.Payment.Integration.php');
  * Plugin Name:  歐付寶 - All in one 收款模組
  * Plugin URI: http://www.ecbank.com.tw/module/index.php
  * Description: AllPay Payment AIO Gateway for WooCommerce
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: Kaija <kaija.chang@gmail.com>
  * Author URI: http://www.penroses.co
  */
@@ -20,6 +20,8 @@ function AllPay_AIO_Init() {
     }
 
     class WC_Gateway_AIO extends WC_Payment_Gateway {
+        protected $line_items = array();
+        protected $one_line_items = array();
 
         var $log;
         var $method_title;
@@ -170,7 +172,93 @@ function AllPay_AIO_Init() {
                 );
             }
         }
+        protected function get_order_item_names( $order ) {
+            $item_names = array();
 
+            foreach ( $order->get_items() as $item ) {
+                $item_names[] = $item['name'] . ' x ' . $item['qty'];
+            }
+            return implode( ', ', $item_names );
+        }
+		protected function get_order_item_name( $order, $item ) {
+            $item_name = $item['name'];
+            $item_meta = new WC_Order_Item_Meta( $item['item_meta'] );
+
+            if ( $meta = $item_meta->display( true, true ) ) {
+                $item_name .= ' ( ' . $meta . ' )';
+            }
+            return $item_name;
+        }
+        protected function add_line_item( $item_name, $quantity = 1, $amount = 0, $item_number = '' ) {
+            $index = ( sizeof( $this->line_items ) / 4 ) + 1;
+
+            if ( ! $item_name || $amount < 0 || $index > 9 ) {
+                return false;
+            }
+
+            $this->line_items[ 'item_name_' . $index ]   = html_entity_decode( wc_trim_string( $item_name, 127 ), ENT_NOQUOTES, 'UTF-8' );
+            $this->line_items[ 'quantity_' . $index ]    = $quantity;
+            $this->line_items[ 'amount_' . $index ]      = $amount;
+            $this->line_items[ 'item_number_' . $index ] = $item_number;
+
+            return true;
+        }
+
+        protected function get_one_line_items()
+        {
+            return $this->one_line_items;
+        }
+
+        protected function del_one_line_items()
+        {
+            $this->one_line_items = array();
+        }
+        protected function append_one_line_items($name, $qty, $price)
+        {
+            array_push($this->one_line_items, array('Name' => $name, 'Price' => $price, 'Currency' => get_woocommerce_currency(), 'Quantity' => $qty, 'URL' => ''));
+        }
+        protected function get_line_items(){
+            return $this->line_items;
+        }
+        protected function delete_line_items(){
+	        $this->line_items = array();
+        }
+        protected function prepare_line_items($order){
+            $this->delete_line_items();
+            $calculated_total = 0;
+
+            // Products
+            foreach ( $order->get_items( array( 'line_item', 'fee' ) ) as $item ) {
+                if ( 'fee' === $item['type'] ) {
+                    $line_item        = $this->add_line_item( $item['name'], 1, $item['line_total'] );
+                    $calculated_total += $item['line_total'];
+				    $this->append_one_line_items($item['name'], 1, $item['line_total']);
+                } else {
+                    $product          = $order->get_product_from_item( $item );
+                    $line_item        = $this->add_line_item( $this->get_order_item_name( $order, $item ), $item['qty'], $order->get_item_subtotal( $item, false ), $product->get_sku() );
+                    $calculated_total += $order->get_item_subtotal( $item, false ) * $item['qty'];
+				    $this->append_one_line_items($this->get_order_item_name( $order, $item ), $item['qty'], $order->get_item_subtotal( $item, false ));
+                }
+
+                if ( ! $line_item ) {
+                    return false;
+                }
+            }
+
+            // Shipping Cost item - paypal only allows shipping per item, we want to send shipping for the order
+            if ( $order->get_total_shipping() > 0 && ! $this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), $order->get_shipping_method() ), 1, round( $order->get_total_shipping(), 2 ) ) ) {
+                return false;
+            }else{
+			    $this->append_one_line_items('ship'.$order->get_shipping_method(), 1, $order->get_total_shipping());
+		    }
+
+            // Check for mismatched totals
+            if ( ( $calculated_total + $order->get_total_tax() + round( $order->get_total_shipping(), 2 ) - round( $order->get_total_discount(), 2 ) ) != $order->get_total() ) {
+                return false;
+            }
+
+            return true;
+	    }
         public function receipt_page($order) {
             global $woocommerce;
             $oOrder = new WC_Order($order);
@@ -211,8 +299,15 @@ function AllPay_AIO_Init() {
                     $oPayment->Send['ChooseSubPayment'] = PaymentMethodItem::None;
                     $oPayment->Send['NeedExtraPaidInfo'] = ExtraPaymentInfo::No;
                     $oPayment->Send['DeviceSource'] = DeviceType::PC;
-
-                    array_push($oPayment->Send['Items'], array('Name' => '商品一批', 'Price' => $oPayment->Send['TotalAmount'], 'Currency' => get_woocommerce_currency(), 'Quantity' => 1, 'URL' => ''));
+					$this->del_one_line_items();
+					if($this->prepare_line_items( $oOrder )){//Parepare all item
+						foreach($this->get_one_line_items() as $value ){
+					        //Push to allpay array
+                            array_push($oPayment->Send['Items'], $value);
+						}
+                    }else{
+                        array_push($oPayment->Send['Items'], array('Name' => '商品一批', 'Price' => $oPayment->Send['TotalAmount'], 'Currency' => get_woocommerce_currency(), 'Quantity' => 1, 'URL' => ''));
+                    }
 
                     //echo $oPayment->CheckOutString("Pay");
                     //Direct go to allpay page

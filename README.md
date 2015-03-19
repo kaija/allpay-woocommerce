@@ -6,6 +6,11 @@ https://github.com/kaija/allpay-woocommerce
 ## Changelog
 
 ### version
+1.1.0
+### Log
+  - Add shopping item to transaction
+
+### version
 1.0.1
 ### Log
   - Add AIO(All in one) payment method
