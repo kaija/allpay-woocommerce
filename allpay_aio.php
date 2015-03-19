@@ -6,7 +6,7 @@ include_once('AllPay.Payment.Integration.php');
  * Plugin Name:  歐付寶 - All in one 收款模組
  * Plugin URI: http://www.ecbank.com.tw/module/index.php
  * Description: AllPay Payment AIO Gateway for WooCommerce
- * Version: 1.0
+ * Version: 1.0.1
  * Author: Kaija <kaija.chang@gmail.com>
  * Author URI: http://www.penroses.co
  */
