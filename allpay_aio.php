@@ -215,7 +215,8 @@ function AllPay_AIO_Init() {
         }
         protected function append_one_line_items($name, $qty, $price)
         {
-            array_push($this->one_line_items, array('Name' => $name, 'Price' => $price, 'Currency' => get_woocommerce_currency(), 'Quantity' => $qty, 'URL' => ''));
+	        $name_only = strtok($name, ' (');
+            array_push($this->one_line_items, array('Name' => $name_only, 'Price' => $price, 'Currency' => get_woocommerce_currency(), 'Quantity' => $qty, 'URL' => ''));
         }
         protected function get_line_items(){
             return $this->line_items;
