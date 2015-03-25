@@ -5,21 +5,21 @@ include_once('AllPay.Payment.Integration.php');
 /*
  * Plugin Name:  歐付寶 - All in one 收款模組
  * Plugin URI: http://www.ecbank.com.tw/module/index.php
- * Description: AllPay Payment AIO Gateway for WooCommerce
+ * Description: AllPay Payment ALL Gateway for WooCommerce
  * Version: 1.1.0
  * Author: Kaija <kaija.chang@gmail.com>
  * Author URI: http://www.penroses.co
  */
 
-add_action('plugins_loaded', 'AllPay_AIO_Init', 0);
+add_action('plugins_loaded', 'AllPay_ALL_Init', 0);
 
-function AllPay_AIO_Init() {
+function AllPay_ALL_Init() {
     // Make sure WooCommerce is setted.
     if (!class_exists('WC_Payment_Gateway')) {
         return;
     }
 
-    class WC_Gateway_AIO extends WC_Payment_Gateway {
+    class WC_Gateway_ALL extends WC_Payment_Gateway {
         protected $line_items = array();
         protected $one_line_items = array();
 
@@ -40,7 +40,7 @@ function AllPay_AIO_Init() {
 
         public function __construct() {
             // Initialize construct properties
-            $this->id = "allpayaio";
+            $this->id = "all";
             $this->method_title = __('AllPay (ALL in One)', 'woocommerce');
             $this->icon = apply_filters('woocommerce_allpay_icon', plugins_url('icon/allpay.png', __FILE__));
             $this->has_fields = false;
@@ -58,10 +58,10 @@ function AllPay_AIO_Init() {
             $this->order_prefix = $this->settings['order_prefix'];
             $this->debug = $this->settings['debug'];
 
-            $this->return_url = add_query_arg('wc-api', 'WC_Gateway_AIO', home_url('/')) . '&callback=return';
+            $this->return_url = add_query_arg('wc-api', 'WC_Gateway_ALL', home_url('/')) . '&callback=return';
             $this->client_back_url = trailingslashit(home_url());
-            $this->order_result_url = add_query_arg('wc-api', 'WC_Gateway_AIO', home_url('/'));
-            $this->payment_info_url = add_query_arg('wc-api', 'WC_Gateway_AIO', home_url('/')) . '&callback=payment_info';
+            $this->order_result_url = add_query_arg('wc-api', 'WC_Gateway_ALL', home_url('/'));
+            $this->payment_info_url = add_query_arg('wc-api', 'WC_Gateway_ALL', home_url('/')) . '&callback=payment_info';
             // Logs
             if ('yes' == $this->debug) {
                 $this->log = new WC_Logger();
@@ -215,7 +215,7 @@ function AllPay_AIO_Init() {
         }
         protected function append_one_line_items($name, $qty, $price)
         {
-	        $name_only = strtok($name, ' (');
+			$name_only = strtok($name, ' (');
             array_push($this->one_line_items, array('Name' => $name_only, 'Price' => $price, 'Currency' => get_woocommerce_currency(), 'Quantity' => $qty, 'URL' => ''));
         }
         protected function get_line_items(){
@@ -332,7 +332,11 @@ function AllPay_AIO_Init() {
                 // 檢核與變更訂單狀態。
                 if (sizeof($arFeedback) > 0) {
                     $szOrderID = $arFeedback['MerchantTradeNo'];
-                    $szOrderID = ($this->testmode ? str_replace($this->testmode_prefix, '', $szOrderID) : $szOrderID);
+                    if($this->testmode){
+                        $szOrderID = ($this->testmode ? str_replace($this->testmode_prefix, '', $szOrderID) : $szOrderID);
+				    }else{
+                        $szOrderID = str_replace($this->order_prefix, '', $szOrderID);
+				    }
                     $deTradeAmount = $arFeedback['TradeAmt'];
                     $szReturnCode = $arFeedback['RtnCode'];
                     $szReturnMessgae = $arFeedback['RtnMsg'];
@@ -391,7 +395,7 @@ function AllPay_AIO_Init() {
      * Add the Gateway Plugin to WooCommerce
      * */
     function woocommerce_add_allpay_aio_plugin($methods) {
-        $methods[] = 'WC_Gateway_AIO';
+        $methods[] = 'WC_Gateway_ALL';
         return $methods;
     }
 
