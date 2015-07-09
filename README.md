@@ -6,6 +6,11 @@ https://github.com/kaija/allpay-woocommerce
 ## Changelog
 
 ### version
+1.1.1
+### Log
+  - Fixed mass production order prefix not remove when receive server response
+
+### version
 1.1.0
 ### Log
   - Add shopping item to transaction

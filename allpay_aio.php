@@ -6,7 +6,7 @@ include_once('AllPay.Payment.Integration.php');
  * Plugin Name:  歐付寶 - All in one 收款模組
  * Plugin URI: http://www.ecbank.com.tw/module/index.php
  * Description: AllPay Payment ALL Gateway for WooCommerce
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Kaija <kaija.chang@gmail.com>
  * Author URI: http://www.penroses.co
  */
@@ -128,7 +128,7 @@ function AllPay_ALL_Init() {
                     'title' => __('Order Prefix', 'woocommerce'),
                     'type' => 'text',
                     'description' => __("Mass Production Order Prefix", 'woocommerce'),
-					'default' => 'woo'
+          'default' => 'woo'
                 ),
                 'testmode_prefix' => array(
                     'title' => __('Test Order Prefix', 'woocommerce'),
@@ -180,7 +180,7 @@ function AllPay_ALL_Init() {
             }
             return implode( ', ', $item_names );
         }
-		protected function get_order_item_name( $order, $item ) {
+    protected function get_order_item_name( $order, $item ) {
             $item_name = $item['name'];
             $item_meta = new WC_Order_Item_Meta( $item['item_meta'] );
 
@@ -215,14 +215,14 @@ function AllPay_ALL_Init() {
         }
         protected function append_one_line_items($name, $qty, $price)
         {
-			$name_only = strtok($name, ' (');
+      $name_only = strtok($name, ' (');
             array_push($this->one_line_items, array('Name' => $name_only, 'Price' => $price, 'Currency' => get_woocommerce_currency(), 'Quantity' => $qty, 'URL' => ''));
         }
         protected function get_line_items(){
             return $this->line_items;
         }
         protected function delete_line_items(){
-	        $this->line_items = array();
+          $this->line_items = array();
         }
         protected function prepare_line_items($order){
             $this->delete_line_items();
@@ -233,12 +233,12 @@ function AllPay_ALL_Init() {
                 if ( 'fee' === $item['type'] ) {
                     $line_item        = $this->add_line_item( $item['name'], 1, $item['line_total'] );
                     $calculated_total += $item['line_total'];
-				    $this->append_one_line_items($item['name'], 1, $item['line_total']);
+            $this->append_one_line_items($item['name'], 1, $item['line_total']);
                 } else {
                     $product          = $order->get_product_from_item( $item );
                     $line_item        = $this->add_line_item( $this->get_order_item_name( $order, $item ), $item['qty'], $order->get_item_subtotal( $item, false ), $product->get_sku() );
                     $calculated_total += $order->get_item_subtotal( $item, false ) * $item['qty'];
-				    $this->append_one_line_items($this->get_order_item_name( $order, $item ), $item['qty'], $order->get_item_subtotal( $item, false ));
+            $this->append_one_line_items($this->get_order_item_name( $order, $item ), $item['qty'], $order->get_item_subtotal( $item, false ));
                 }
 
                 if ( ! $line_item ) {
@@ -250,8 +250,8 @@ function AllPay_ALL_Init() {
             if ( $order->get_total_shipping() > 0 && ! $this->add_line_item( sprintf( __( 'Shipping via %s', 'woocommerce' ), $order->get_shipping_method() ), 1, round( $order->get_total_shipping(), 2 ) ) ) {
                 return false;
             }else{
-			    $this->append_one_line_items('ship'.$order->get_shipping_method(), 1, $order->get_total_shipping());
-		    }
+          $this->append_one_line_items('ship'.$order->get_shipping_method(), 1, $order->get_total_shipping());
+        }
 
             // Check for mismatched totals
             if ( ( $calculated_total + $order->get_total_tax() + round( $order->get_total_shipping(), 2 ) - round( $order->get_total_discount(), 2 ) ) != $order->get_total() ) {
@@ -259,7 +259,7 @@ function AllPay_ALL_Init() {
             }
 
             return true;
-	    }
+      }
         public function receipt_page($order) {
             global $woocommerce;
             $oOrder = new WC_Order($order);
@@ -286,12 +286,12 @@ function AllPay_ALL_Init() {
                     $oPayment->Send['ReturnURL'] = $this->return_url;
                     $oPayment->Send['ClientBackURL'] = $this->client_back_url;
                     $oPayment->Send['OrderResultURL'] = $this->order_result_url;
-					//$oPayment->Send['MerchantTradeNo'] = ('yes' == $this->testmode ? $this->testmode_prefix : '') . $oOrder->id;
-					if('yes' == $this->testmode){
-                    	$oPayment->Send['MerchantTradeNo'] = $this->testmode_prefix.$oOrder->id;
-					}else{
-                    	$oPayment->Send['MerchantTradeNo'] = $this->order_prefix.$oOrder->id;
-					}
+                    //$oPayment->Send['MerchantTradeNo'] = ('yes' == $this->testmode ? $this->testmode_prefix : '') . $oOrder->id;
+                    if('yes' == $this->testmode){
+                        $oPayment->Send['MerchantTradeNo'] = $this->testmode_prefix.$oOrder->id;
+                    }else{
+                      $oPayment->Send['MerchantTradeNo'] = $this->order_prefix.$oOrder->id;
+                    }
                     $oPayment->Send['MerchantTradeDate'] = date('Y/m/d H:i:s');
                     $oPayment->Send['TotalAmount'] = round($oOrder->get_total());
                     $oPayment->Send['TradeDesc'] = "AllPay_WooCommerce_Module";
@@ -300,12 +300,12 @@ function AllPay_ALL_Init() {
                     $oPayment->Send['ChooseSubPayment'] = PaymentMethodItem::None;
                     $oPayment->Send['NeedExtraPaidInfo'] = ExtraPaymentInfo::No;
                     $oPayment->Send['DeviceSource'] = DeviceType::PC;
-					$this->del_one_line_items();
-					if($this->prepare_line_items( $oOrder )){//Parepare all item
-						foreach($this->get_one_line_items() as $value ){
-					        //Push to allpay array
+          $this->del_one_line_items();
+          if($this->prepare_line_items( $oOrder )){//Parepare all item
+            foreach($this->get_one_line_items() as $value ){
+                  //Push to allpay array
                             array_push($oPayment->Send['Items'], $value);
-						}
+            }
                     }else{
                         array_push($oPayment->Send['Items'], array('Name' => '商品一批', 'Price' => $oPayment->Send['TotalAmount'], 'Currency' => get_woocommerce_currency(), 'Quantity' => 1, 'URL' => ''));
                     }
@@ -332,17 +332,22 @@ function AllPay_ALL_Init() {
                 // 檢核與變更訂單狀態。
                 if (sizeof($arFeedback) > 0) {
                     $szOrderID = $arFeedback['MerchantTradeNo'];
-                    if($this->testmode){
+                    if ('yes' == $this->testmode) {
                         $szOrderID = ($this->testmode ? str_replace($this->testmode_prefix, '', $szOrderID) : $szOrderID);
-				    }else{
-                        $szOrderID = str_replace($this->order_prefix, '', $szOrderID);
-				    }
+                    }else{
+                        if($this->order_prefix) {
+                            $szOrderID = str_replace($this->order_prefix, "", $szOrderID);
+      }else{
+                            $szOrderID = str_replace('woo', '', $szOrderID);
+                        }
+                    }
                     $deTradeAmount = $arFeedback['TradeAmt'];
                     $szReturnCode = $arFeedback['RtnCode'];
                     $szReturnMessgae = $arFeedback['RtnMsg'];
                     // 查詢系統訂單。
                     $oOrder = new WC_Order($szOrderID);
                     $deTotalAmount = $oOrder->get_total();
+                    $suTotalAmount = $oOrder->get_subtotal();
                     $szOrderStatus = $oOrder->status;
                     // 核對訂單金額。
                     if ($deTradeAmount == $deTotalAmount) {
@@ -360,7 +365,7 @@ function AllPay_ALL_Init() {
                             $szMessage = "0|Order '$szOrderID' Exception.($szReturnCode: $szReturnMessgae)";
                         }
                     } else {
-                        $szMessage = '0|Compare "' . $szOrderID . '" Order Amount Fail.';
+                        $szMessage = '0|Compare "' . $szOrderID . '" Order Amount Fail.'. ' Order from Allpay'. $szOrderID . ' amount:' . $deTradeAmount . '  Local:'. $deTotalAmount. ' subtotal:' . $suTotalAmount . ' order prefix:'. $this->order_prefix;
                     }
                 } else {
                     $szMessage = '0|"' . $szOrderID . '" Order Not Found at AllPay.';
